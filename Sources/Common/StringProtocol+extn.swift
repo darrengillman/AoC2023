@@ -9,3 +9,7 @@ import Foundation
 extension StringProtocol {
    var asString: String {String(self)}
 }
+
+extension String.Element {
+   var asString: String {String(self)}
+}
