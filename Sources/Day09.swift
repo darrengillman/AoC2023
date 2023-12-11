@@ -16,22 +16,15 @@ struct Day09: AdventDay {
       }
       
       
-      mutating func extrapolate() -> Int {
+      mutating func extrapolate(backwards: Bool = false) -> Int {
          while !rows.last!.allZero {
             rows.append(nextRow(for: rows.last!))
          }
          return rows
-            .reversed().reduce(0){$1.last! + $0}
+            .reversed()
+            .map{backwards ? $0.reversed() : $0}
+            .reduce(0){backwards ? $1.last! - $0 : $1.last! + $0}
       }
-      
-      mutating func backtrapolate() -> Int {
-         while !rows.last!.allZero {
-            rows.append(nextRow(for: rows.last!))
-         }
-         return rows.reversed().reduce(0){ $1.first! - $0 }
-
-      }
-      
    }
 
   // Splits input data into its component parts and convert from string.
@@ -51,7 +44,6 @@ struct Day09: AdventDay {
      return (0..<surveys.count).reduce(0){ total, index in
         total + surveys[index].extrapolate()
      }     
-// 686444787 too low
 
 
   }
@@ -61,7 +53,7 @@ struct Day09: AdventDay {
      var surveys = entities.map{Survey(rows: [$0])}
      
      return (0..<surveys.count).reduce(0){ total, index in
-        total + surveys[index].backtrapolate()
+        total + surveys[index].extrapolate(backwards: true )
      }     
   }
 }
