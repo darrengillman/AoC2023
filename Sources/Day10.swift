@@ -66,25 +66,7 @@ enum Tile: Character, CustomStringConvertible {
    }
 } 
 
-struct Point: Hashable, CustomStringConvertible {
-   let x: Int
-   let y: Int
-   
-   init(_ x: Int, _ y: Int) {
-      self.x = x
-      self.y = y
-   }
-   var description: String {"(\(x), \(y))"}
-   
-   func point(heading direction: Direction) -> Point {
-      switch direction {
-         case .N: Point(x, y-1)
-         case .S: Point(x, y+1)
-         case .E: Point(x+1, y)
-         case .W: Point(x-1, y)
-      }
-   }
-}
+
 
 //struct Node: Equatable, CustomStringConvertible {
 //   static func == (lhs: Node, rhs: Node) -> Bool {
@@ -225,12 +207,12 @@ struct Day10: AdventDay {
      map.findLoop().forEach{grid[$0.y][$0.x] = .pipe}
      var next: (x: Int, y: Int)? { !edges.isEmpty ? edges.removeFirst() : nil }
 
-     
-     while let edge {
-        dfs(start: edge)
-        
-     }
-     
-     
+//     
+//     while let edge {
+//        dfs(start: edge)
+//        
+//     }
+//     
+     return 0
   }
 }
