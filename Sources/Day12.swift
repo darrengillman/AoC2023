@@ -1,115 +1,129 @@
 import Algorithms
 
+extension StringProtocol {
+   func dropFirstAnd(_ n: Int = 1, leading drop: Character = ".") -> String {
+      dropFirst(n).drop(while: {$0 == drop}).asString
+   }
+}
+
+extension Sequence {
+   func asArray() -> Array<Element> {
+      Array(self)
+   }
+}
+
+
 struct Day12: AdventDay {
    init(data: String) {
       self.data = data
       self.cache = Cache()
    }
    
-   struct RowOfSprings {
-      let springs: String
-      let mask: [Int]
+   struct Row: Hashable, CustomStringConvertible {
+      var description: String {"\(str) \(groups)"}
       
-      var isValid: Bool {
-         let groups = springs.matches(of: /#+/).map{$0.output.count}
-         return groups == mask
+      internal init(str: String, groups: [Int]) {
+         self.str = str
+         self.groups = groups
+      }
+      
+      let str: String
+      let groups: [Int]
+      
+      var unfolded: Row {Row(str: String(repeating: str+"?", count: 4)+str, groups: (1...5).flatMap{_ in groups}) }
+      
+      init(_ line: String) {
+         guard let split = line.firstIndex(of: " ") else {fatalError()}
+         str = line[..<split].asString
+         groups = line.matches(of: /\d+/).map{Int($0.output)!}
       }
    }
-   
-   
-   func expandOnlyUnknowns(str: String) -> [String] {
-      guard str.contains("?") else {return [str]}
-      let cached = cache.value(for: str)
-      guard cached == nil else {return cached!}
-      let resolved = expandOnlyUnknowns(str: str.dropFirst().asString).flatMap{["." + $0, "#" + $0]}
-      cache.add(str, resolved)
-      return resolved
-   }
-   
-   
-   func expandRow(_ str: String) -> [String] {
-      guard str.contains("?") else {return [str]}
-      let maybes =  str.firstMatch(of: /\?+/)!.range
-      let expansions = expandOnlyUnknowns(str: str[maybes].asString)
-      let results = expansions.map{str[..<maybes.lowerBound].asString + $0 + str[maybes.upperBound...].asString}
-      
-      return results.flatMap{expandRow($0)}
-   }
-   
-   func expand(rowOfSprings: RowOfSprings) -> [RowOfSprings] {
-      expandRow(rowOfSprings.springs).map{RowOfSprings(springs: $0, mask: rowOfSprings.mask)
-      }
-   }
-   
-   
-   
-  
-   
-   
-  // Save your data in a corresponding text file in the `Data` directory.
-   var data: String
-   var cache: Cache
-
-  // Splits input data into its component parts and convert from string.
-  var entities: [RowOfSprings] {
-     data.components(separatedBy: .newlines) 
-        .map{$0.trimmingCharacters(in: .whitespaces)}
-        .filter{!$0.isEmpty}
-        .map{line in
-           guard let split = line.firstIndex(of: " ") else {fatalError()}
-           return RowOfSprings(springs: line[..<split].asString, 
-                               mask: line.matches(of: /\d+/).map{Int($0.output)!})
-        }
-    }
-   
    
    class Cache {
+      private var cache = [Row: Int]()
       
-      init() {
-         length = nil
-      }
-      private var cache = [String: [String]]()
-      let length: Int?
-      
-      func add(_ str: String, _ arr: [String]) {
-         cache[str] = arr
+      func add(_ row: Row, value: Int) {
+         guard !row.str.isEmpty && !row.groups.isEmpty else {return}
+         cache[row] = value
       }
       
-      func value(for key: String) -> [String]? {
-         cache[key]
-      }
+      func value(for row: Row) -> Int? {
+        cache[row]
+      }      
    }
 
-   func expand(_ row: RowOfSprings) -> [RowOfSprings] {
-      guard row.springs.contains("?") else {return [row]}
-//      let cachedSprings = cache.value(for: row.springs)
-//      guard cachedSprings == nil else {
-//         return cachedSprings!.map{RowOfSprings(springs: $0, mask: row.mask) }
-//      }
-      let s1 = RowOfSprings(springs: row.springs.replacingFirstOccurrence(of: "?", with: "."), mask: row.mask)
-      let s2 = RowOfSprings(springs: row.springs.replacingFirstOccurrence(of: "?", with: "#"), mask: row.mask)      
-      let x1 = expand(s1)
-      let x2 = expand(s2)
-//      cache.add(s1.springs, x1.map{$0.springs})
-//      cache.add(s2.springs, x2.map{$0.springs})
-      return x1 + x2
+   let data: String
+   let cache: Cache
+   
+   var entities: [Row] {
+      data.components(separatedBy: .newlines) 
+         .map{$0.trimmingCharacters(in: .whitespaces)}
+         .filter{!$0.isEmpty}
+         .map{Row($0)}
+   }
+   
+   func process(row: Row) -> Int {
+      if let value = cache.value(for: row) {
+         return value
+      }    
+      
+      let result : Int
+      if row.groups.isEmpty  { result = row.str.contains("#") ? 0 : 1 }
+      else if row.str.isEmpty  { result = 0 }
+      else {
+         switch row.str.first! {
+            case ".": 
+               result = dot(row) 
+            case "?": 
+               result = hash(row) + dot(row)
+            case "#":
+               result = hash(row)
+            default: fatalError()
+         }
+      }
+      cache.add(row, value: result)
+      return result
+   }
+   
+   func dot(_ row: Row) -> Int {
+      process(row: .init(str: row.str.dropFirstAnd(), groups: row.groups))
+   }
+   
+   func hash(_ row: Row) -> Int {
+      let group = row.groups.first!
+      guard row.str.count >= group else {return 0}
+      let prefix = row.str.prefix(group).asString
+      let strLeft = row.str.dropFirst(group).asString
+      guard !prefix.contains( ".") else {return 0}
+      if strLeft.prefix(1) == "#" {return 0}
+      if strLeft.prefix(1) == "?" { return process(row: Row(str: strLeft.dropFirstAnd(), groups: row.groups.dropFirst().asArray()))}         
+      return process(row: .init(str: strLeft.dropFirstAnd(0), groups: row.groups.dropFirst().asArray()))
    }
    
    
-  // Replace this with your solution for the first part of the day's challenge.
-  func part1() -> Any {
-     entities
-        .map{ 
-           expand(rowOfSprings: $0)
-              .filter(\.isValid)
-        }
-        .reduce(0) {$0 + $1.count
-     }
-  }
-
-  // Replace this with your solution for the second part of the day's challenge.
-//  func part2() -> Any {
-//    // Sum the maximum entries in each set of data
-//    entities.map { $0.max() ?? 0 }.reduce(0, +)
-//  }
+   
+   func part1() -> Any {
+      entities
+         .map{ 
+//            let length = $0.str.count
+            let n = process(row: $0)
+               //           print($0, n, separator: " = ")
+            return n
+         }
+         .reduce(0, +)
+   }
+   
+   func part2() -> Any {
+      entities
+         .map{ $0.unfolded }
+         .map{ 
+//            let length = $0.str.count
+            //cache.clear()
+            let n = process(row: $0)
+//                          print($0, n, separator: " = ")
+            return n
+         }
+         .reduce(0, +)
+   }
 }
+

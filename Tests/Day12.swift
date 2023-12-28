@@ -5,7 +5,6 @@ import XCTest
 // Make a copy of this file for every day to ensure the provided smoke tests
 // pass.
 final class Day12Tests: XCTestCase {
-  // Smoke test data provided in the challenge question
   let testData = """
    ???.### 1,1,3
    .??..??...?##. 1,1,3
@@ -14,40 +13,42 @@ final class Day12Tests: XCTestCase {
    ????.######..#####. 1,6,5
    ?###???????? 3,2,1
    """
-
+   
+   let allPassData = """
+#.#.### 1,1,3
+.#...#....###. 1,1,3
+.#.###.#.###### 1,3,1,6
+####.#...#... 4,1,1
+#....######..#####. 1,6,5
+.###.##....# 3,2,1
+"""
+   
+   func testAllPass() throws {
+      let challenge = Day12(data: allPassData)
+      XCTAssertEqual(String(describing: challenge.part1()), "6")
+   }
+   
   func testPart1() throws {
     let challenge = Day12(data: testData)
     XCTAssertEqual(String(describing: challenge.part1()), "21")
   }
    
-   func testUnknownsExpansion() {
-      let x = Day12(data: testData)
-      let out = 
-      XCTAssert(Set( x.expandOnlyUnknowns(str: "?") ) == Set(["#", "."]))
-      XCTAssert(Set( x.expandOnlyUnknowns(str: "??") ) == Set(["##", "#.", ".#", ".."]))
-      XCTAssert(Set( x.expandOnlyUnknowns(str: "???") ) == Set(["###", "##.", "#.#", "#..", "...", "..#", ".#.", ".##"]))
+   
+   func testUnfolding() {
+      XCTAssertEqual(Day12.Row(".# 1").unfolded, Day12.Row(".#?.#?.#?.#?.# 1,1,1,1,1"))
+      XCTAssertEqual(Day12.Row("???.### 1,1,3").unfolded, Day12.Row("???.###????.###????.###????.###????.### 1,1,3,1,1,3,1,1,3,1,1,3,1,1,3"))
+
    }
    
-   func testRowExpansion() {
-      let x = Day12(data: testData)
-      XCTAssertEqual(Set(x.expandRow("??")), Set(["##", "#.", ".#", ".."]))
-      XCTAssertEqual(Set(x.expandRow(".??")), Set([".##", ".#.", "..#", "..."]))
-      XCTAssertEqual(Set(x.expandRow("#??")), Set(["###", "##.", "#.#", "#.."]))
-      XCTAssertEqual(Set(x.expandRow("#??#.")), Set(["####.", "##.#.", "#.##.", "#..#."]))
-      
-      XCTAssertEqual(Set(x.expandRow("#??#?.")), 
-                     Set([
-                        "#####.", "##.##.", "#.###.", "#..##.",
-                        "####..", "##.#..", "#.##..", "#..#.."
-                     ]))
-
-
-
-   }
+   func testLine(){
+      let line = "???.###????.###????.###????.###????.### 1,1,3,1,1,3,1,1,3,1,1,3,1,1,3"
+   let challenge = Day12(data: line)
+   XCTAssertEqual(String(describing: challenge.part1()), "1")
+}
    
 
   func testPart2() throws {
     let challenge = Day12(data: testData)
-    XCTAssertEqual(String(describing: challenge.part2()), "32000")
+    XCTAssertEqual(String(describing: challenge.part2()), "525152")
   }
 }
