@@ -62,32 +62,30 @@ struct Day12: AdventDay {
          .map{Row($0)}
    }
    
+   
    func process(row: Row) -> Int {
       if let value = cache.value(for: row) {
          return value
       }    
       
       let result : Int
-      if row.groups.isEmpty  { result = row.str.contains("#") ? 0 : 1 }
-      else if row.str.isEmpty  { result = 0 }
-      else {
-         switch row.str.first! {
-            case ".": 
-               result = dot(row) 
-            case "?": 
-               result = hash(row) + dot(row)
-            case "#":
-               result = hash(row)
-            default: fatalError()
-         }
+      switch row {
+         case let row where row.groups.isEmpty: result = row.str.contains("#") ? 0 : 1 
+         case let row where row.str.isEmpty: result = 0
+         case let row where row.str.first! == ".": result = dot(row) 
+         case let row where row.str.first! == "?": result = hash(row) + dot(row)
+         case let row where row.str.first! == "#": result = hash(row) 
+         default: fatalError()
       }
       cache.add(row, value: result)
       return result
    }
    
+   
    func dot(_ row: Row) -> Int {
       process(row: .init(str: row.str.dropFirstAnd(), groups: row.groups))
    }
+   
    
    func hash(_ row: Row) -> Int {
       let group = row.groups.first!
@@ -101,28 +99,17 @@ struct Day12: AdventDay {
    }
    
    
-   
    func part1() -> Any {
       entities
-         .map{ 
-//            let length = $0.str.count
-            let n = process(row: $0)
-               //           print($0, n, separator: " = ")
-            return n
-         }
+         .map{ process(row: $0) }
          .reduce(0, +)
    }
+
    
    func part2() -> Any {
       entities
          .map{ $0.unfolded }
-         .map{ 
-//            let length = $0.str.count
-            //cache.clear()
-            let n = process(row: $0)
-//                          print($0, n, separator: " = ")
-            return n
-         }
+         .map{ process(row: $0) }
          .reduce(0, +)
    }
 }
