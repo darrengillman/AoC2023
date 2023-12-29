@@ -6,12 +6,6 @@ extension StringProtocol {
    }
 }
 
-extension Sequence {
-   func asArray() -> Array<Element> {
-      Array(self)
-   }
-}
-
 
 struct Day12: AdventDay {
    init(data: String) {
