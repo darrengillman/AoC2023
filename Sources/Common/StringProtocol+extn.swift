@@ -8,6 +8,7 @@
 import Foundation
 extension StringProtocol {
    var asString: String {String(self)}
+   var asInt: Int? {Int(self)}
 }
 
 extension String {
