@@ -6,7 +6,12 @@
 //
 
 import Foundation
-struct Point: Hashable, CustomStringConvertible {
+struct Point: Hashable, CustomStringConvertible, Equatable, Comparable {
+   static func < (lhs: Point, rhs: Point) -> Bool {
+      guard lhs.y == rhs.y else {return lhs.y < rhs.y}
+      return lhs.x < rhs.x
+   }
+   
    let x: Int
    let y: Int
    
@@ -14,6 +19,8 @@ struct Point: Hashable, CustomStringConvertible {
       self.x = x
       self.y = y
    }
+   
+   
    var description: String {"(\(x), \(y))"}
    
    func point(heading direction: Direction) -> Point {

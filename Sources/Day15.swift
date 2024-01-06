@@ -11,7 +11,6 @@ extension String {
 }
 
 struct Day15: AdventDay {
-      // Save your data in a corresponding text file in the `Data` directory.
    var data: String
    let day = 15
    
@@ -57,26 +56,18 @@ struct Day15: AdventDay {
          lenses = lenses.compactMap{$0}
       }
    }
-
    
-  // Splits input data into its component parts and convert from string.
-  var entities: [String] {
-     let d = data
-        .trimmingCharacters(in: .newlines)
-        .components(separatedBy: ",")
-     return d
-  }
-
-  // Replace this with your solution for the first part of the day's challenge.
-  func part1() -> Any {
-     entities.reduce(0){ $0 + $1.hashed}
-  }
+   var entities: [String] {
+      let d = data
+         .trimmingCharacters(in: .newlines)
+         .components(separatedBy: ",")
+      return d
+   }
    
-
+   func part1() -> Any {
+      entities.reduce(0){ $0 + $1.hashed}
+   }
    
-
-
-      // Replace this with your solution for the second part of the day's challenge.
    func part2() -> Any {
       var hashmap = [Int: Box]()
       
@@ -97,6 +88,5 @@ struct Day15: AdventDay {
       
       let result = hashmap.filter{!$0.value.isEmpty}.reduce(0){$0 + $1.value.focalPower}   
       return result
-      
    }
 }
