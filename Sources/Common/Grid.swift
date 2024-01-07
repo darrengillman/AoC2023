@@ -8,7 +8,7 @@
 import Foundation
 
 class Grid<T: CustomStringConvertible> {
-   enum Heading {
+   enum Heading: Int, CaseIterable {
       case left, right, up, down
    }
    
@@ -96,5 +96,54 @@ class Grid<T: CustomStringConvertible> {
    
    func set(_ p: Point? = nil, to value: T) {
       grid[p ?? current] = value
+   }
+   
+}
+
+extension Grid where T == Int {
+   struct State {
+      let point: Point
+      let cost: Int
+      let heading: Heading
+      let consecutiveMoves: Int
+   }
+   
+   
+   func lcr(from: Point, to: Point, includeStartWeight: Bool = false, minStraight: Int = 0, maxStraight: Int = Int.max) -> Int {
+      var visited: [Point: Int] = [:]
+      var nearest: [Int: [State]] = [(includeStartWeight ? grid[from]! : 0) : [State(point: from, cost: 0, heading: .left, consecutiveMoves: 0)]]
+      
+      var next: State? {
+         guard let lowestCost = nearest.keys.min() else {return nil}
+         guard let next =  nearest[lowestCost]?.popLast() else {return nil}
+         if nearest[lowestCost]!.isEmpty {
+            nearest[lowestCost] = nil
+         }
+         return next
+      }
+
+      
+      while let next {
+         jump(to: next.point, heading: next.heading)
+         let possibleStates : [State] = Heading
+            .allCases
+            .compactMap{ heading in
+               guard let validPoint = self.point(looking: heading) else {return nil}
+               guard !visited.keys.contains(validPoint) else {return nil}
+               return State(point: validPoint, 
+                            cost: min(visited[validPoint, default:  Int.max], next.cost + grid[validPoint]!),
+                            heading: heading, 
+                            consecutiveMoves: heading == next.heading ? next.consecutiveMoves + 1 : 0 
+               )}
+         
+         for newState in possibleStates {
+            if newState.point == to {
+               return newState.cost
+            }
+            visited[newState.point] = newState.cost
+            nearest[newState.cost, default: [] ].append(newState)
+         }
+      }
+      fatalError("Exit point not found")
    }
 }

@@ -6,6 +6,7 @@
 //
 
 import Foundation
+
 struct Point: Hashable, CustomStringConvertible, Equatable, Comparable {
    static func < (lhs: Point, rhs: Point) -> Bool {
       guard lhs.y == rhs.y else {return lhs.y < rhs.y}
