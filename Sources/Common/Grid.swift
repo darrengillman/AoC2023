@@ -10,6 +10,15 @@ import Foundation
 class Grid<T: CustomStringConvertible> {
    enum Heading: Int, CaseIterable {
       case left, right, up, down
+      
+      var reverse: Self {
+         switch self {
+            case .left:  .right
+            case .right: .left
+            case .up: .down
+            case .down: .up
+         }
+      }
    }
    
    subscript(_ p: (x: Int, y: Int)) -> T? {
@@ -101,48 +110,62 @@ class Grid<T: CustomStringConvertible> {
 }
 
 extension Grid where T == Int {
-   struct State {
+   struct State: CustomStringConvertible {
       let point: Point
       let cost: Int
       let heading: Heading
       let consecutiveMoves: Int
+      
+      var description: String {
+         "\(point): cost: \(cost), heading: \(heading), inLine: \(consecutiveMoves)"
+      }
    }
    
    
    func lcr(from: Point, to: Point, includeStartWeight: Bool = false, minStraight: Int = 0, maxStraight: Int = Int.max) -> Int {
       var visited: [Point: Int] = [:]
-      var nearest: [Int: [State]] = [(includeStartWeight ? grid[from]! : 0) : [State(point: from, cost: 0, heading: .left, consecutiveMoves: 0)]]
+      var queue: [Int: [State]] = [(includeStartWeight ? grid[from]! : 0) : [State(point: from, cost: 0, heading: .right, consecutiveMoves: 0)]]
       
-      var next: State? {
-         guard let lowestCost = nearest.keys.min() else {return nil}
-         guard let next =  nearest[lowestCost]?.popLast() else {return nil}
-         if nearest[lowestCost]!.isEmpty {
-            nearest[lowestCost] = nil
-         }
-         return next
+      var nextSteps: [State]? {
+         guard let lowestCost = queue.keys.min() else {return nil}
+         guard let group =  queue[lowestCost] else {return nil}
+         queue[lowestCost] = nil
+         return group
       }
 
-      
-      while let next {
-         jump(to: next.point, heading: next.heading)
-         let possibleStates : [State] = Heading
-            .allCases
-            .compactMap{ heading in
-               guard let validPoint = self.point(looking: heading) else {return nil}
-               guard !visited.keys.contains(validPoint) else {return nil}
-               return State(point: validPoint, 
-                            cost: min(visited[validPoint, default:  Int.max], next.cost + grid[validPoint]!),
-                            heading: heading, 
-                            consecutiveMoves: heading == next.heading ? next.consecutiveMoves + 1 : 0 
-               )}
-         
-         for newState in possibleStates {
-            if newState.point == to {
-               return newState.cost
+      while let nextSteps {
+         for step in nextSteps {
+            visited[step.point] = step.cost
+            
+            jump(to: step.point, heading: step.heading)
+            let viableStates : [State] = Heading
+               .allCases
+               .filter{$0 != step.heading.reverse}
+               .compactMap{ newHeading in
+                  guard let validPoint = self.point(looking: newHeading) else {return nil}
+                  guard visited[validPoint, default: Int.max] > (step.cost + grid[validPoint]!) else {return nil}
+//                  guard !visited.keys.contains(validPoint) else {return nil}
+                  let straightLineMoves = newHeading == step.heading ? step.consecutiveMoves + 1 : 1
+                  guard straightLineMoves >= minStraight && straightLineMoves <= maxStraight else {return nil}
+                  return State(point: validPoint, 
+                               cost: step.cost + grid[validPoint]!,
+                               heading: newHeading, 
+                               consecutiveMoves: straightLineMoves 
+                  )
+               }
+            
+            assert(viableStates.count < 4)
+            
+            for newState in viableStates {
+               if newState.point == to {
+                  print("out: \(newState)")
+                  return newState.cost
+               }
+               queue[newState.cost, default: [] ].append(newState)
             }
-            visited[newState.point] = newState.cost
-            nearest[newState.cost, default: [] ].append(newState)
          }
+//         print(visited)
+//         print()
       }
       fatalError("Exit point not found")
    }

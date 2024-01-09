@@ -9,6 +9,8 @@ struct Day17: AdventDay {
   // Splits input data into its component parts and convert from string.
   var entities: [[Int]] {
      data.components(separatedBy: .newlines)
+        .filter{!$0.isEmpty}
+        .map{$0.trimmingCharacters(in: .whitespaces)}
         .map{$0.map{$0.asString.asInt!}
     }
   }
@@ -16,7 +18,7 @@ struct Day17: AdventDay {
   // Replace this with your solution for the first part of the day's challenge.
   func part1() -> Any {
      let grid = Grid(from: entities)
-     return grid.lcr(from: .init(0,0), to: .init(grid.xMax, grid.yMax))
+     return grid.lcr(from: .init(0,0), to: .init(grid.xMax, grid.yMax), maxStraight: 3)
     // Calculate the sum of the first set of input data
   }
 
