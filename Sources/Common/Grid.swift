@@ -110,7 +110,16 @@ class Grid<T: CustomStringConvertible> {
 }
 
 extension Grid where T == Int {
-   struct State: CustomStringConvertible {
+   struct State: CustomStringConvertible, Comparable, Hashable {
+      static func < (lhs: Grid<T>.State, rhs: Grid<T>.State) -> Bool {
+         lhs.point == rhs.point && lhs.consecutiveMoves == rhs.consecutiveMoves
+      }
+      func hash(into hasher: inout Hasher) {
+         hasher.combine(point)
+         hasher.combine(heading)
+         hasher.combine(consecutiveMoves)
+      }
+      
       let point: Point
       let cost: Int
       let heading: Heading
@@ -123,7 +132,7 @@ extension Grid where T == Int {
    
    
    func lcr(from: Point, to: Point, includeStartWeight: Bool = false, minStraight: Int = 0, maxStraight: Int = Int.max) -> Int {
-      var visited: [Point: Int] = [:]
+      var visited: [State: Int] = [:]
       var queue: [Int: [State]] = [(includeStartWeight ? grid[from]! : 0) : [State(point: from, cost: 0, heading: .right, consecutiveMoves: 0)]]
       
       var nextSteps: [State]? {
@@ -135,7 +144,7 @@ extension Grid where T == Int {
 
       while let nextSteps {
          for step in nextSteps {
-            visited[step.point] = step.cost
+            visited[step] = step.cost
             
             jump(to: step.point, heading: step.heading)
             let viableStates : [State] = Heading
@@ -143,20 +152,24 @@ extension Grid where T == Int {
                .filter{$0 != step.heading.reverse}
                .compactMap{ newHeading in
                   guard let validPoint = self.point(looking: newHeading) else {return nil}
-                  guard visited[validPoint, default: Int.max] > (step.cost + grid[validPoint]!) else {return nil}
+//                  guard visited[validPoint, default: Int.max] > (step.cost + grid[validPoint]!) else {return nil}
 //                  guard !visited.keys.contains(validPoint) else {return nil}
                   let straightLineMoves = newHeading == step.heading ? step.consecutiveMoves + 1 : 1
                   guard straightLineMoves >= minStraight && straightLineMoves <= maxStraight else {return nil}
-                  return State(point: validPoint, 
+                  let state = State(point: validPoint, 
                                cost: step.cost + grid[validPoint]!,
                                heading: newHeading, 
                                consecutiveMoves: straightLineMoves 
                   )
+                  guard visited[state] == nil else {return nil}
+                  return state
+                  
                }
             
             assert(viableStates.count < 4)
             
             for newState in viableStates {
+               guard !queue[newState.cost, default: [] ].contains(newState) else {continue} 
                if newState.point == to {
                   print("out: \(newState)")
                   return newState.cost
